@@ -6,6 +6,7 @@ import com.arthur.usuario.infrastructure.entity.Usuario;
 import com.arthur.usuario.infrastructure.exceptions.ConflictException;
 import com.arthur.usuario.infrastructure.exceptions.ResourceNotFoundException;
 import com.arthur.usuario.infrastructure.repository.UsuarioRepository;
+import com.arthur.usuario.infrastructure.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioConverter usuarioConverter;
     private final PasswordEncoder PasswordEncoder;
+    private final JwtUtil jwtUtil;
 
     public UsuarioDTO salvarUsuario(UsuarioDTO usuarioDTO) {
         emailExiste(usuarioDTO.getEmail());
@@ -28,12 +30,12 @@ public class UsuarioService {
     }
 
     public void emailExiste(String email) {
-        try{
+        try {
             boolean existe = verificarEmailExistente(email);
-            if(existe){
+            if (existe) {
                 throw new ConflictException("Email ja cadastrado" + email);
             }
-        }catch (ConflictException e){
+        } catch (ConflictException e) {
             throw new ConflictException("Email ja cadastrado" + e.getCause());
         }
     }
@@ -44,10 +46,25 @@ public class UsuarioService {
 
     public Usuario buscarUsuarioPorEmail(String email) {
         return usuarioRepository.findByEmail(email).orElseThrow(
-                () ->new ResourceNotFoundException("email nao encontrado"+ email));
+                () -> new ResourceNotFoundException("email nao encontrado" + email));
     }
 
     public void deletaUsuarioPorEmail(String email) {
         usuarioRepository.deleteByEmail(email);
     }
+
+    public UsuarioDTO atualizarDadosUsuario(String token, UsuarioDTO usuarioDTO) {
+        String email = jwtUtil.extrairEmailToken(token.substring(7));
+
+        usuarioDTO.setSenha(usuarioDTO.getSenha() != null ? PasswordEncoder.encode(usuarioDTO.getSenha()) : null);
+
+        Usuario usuarioEntity = usuarioRepository.findByEmail(email).orElseThrow(() ->
+                new ResourceNotFoundException("email nao encontrado"));
+
+        Usuario usuario = usuarioConverter.updateUsuario(usuarioDTO, usuarioEntity);
+
+
+        return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));
+    }
+
 }
