@@ -4,7 +4,6 @@ import com.arthur.usuario.business.UsuarioService;
 import com.arthur.usuario.business.dto.EnderecoDTO;
 import com.arthur.usuario.business.dto.TelefoneDTO;
 import com.arthur.usuario.business.dto.UsuarioDTO;
-import com.arthur.usuario.infrastructure.entity.Endereco;
 import com.arthur.usuario.infrastructure.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
