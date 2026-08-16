@@ -2,8 +2,6 @@ package com.arthur.usuario.business.dto;
 
 import lombok.*;
 
-import java.util.List;
-
 @Getter
 @Setter
 @AllArgsConstructor
