@@ -33,26 +33,36 @@ public class SecurityConfig {
 
     // Configuração do filtro de segurança
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Cria uma instância do JwtRequestFilter com JwtUtil e UserDetailsService
-        JwtRequestFilter jwtRequestFilter = new JwtRequestFilter(jwtUtil, userDetailsService);
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+        try {
+            JwtRequestFilter jwtRequestFilter =
+                    new JwtRequestFilter(jwtUtil, userDetailsService);
 
-        http
-                .csrf(AbstractHttpConfigurer::disable) // Desativa proteção CSRF para APIs REST (não aplicável a APIs que não mantêm estado)
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/usuario/login").permitAll() // Permite acesso ao endpoint de login sem autenticação
-                        .requestMatchers(HttpMethod.GET, "/auth").permitAll()// Permite acesso ao endpoint GET /auth sem autenticação
-                        .requestMatchers(HttpMethod.POST, "/usuario").permitAll() // Permite acesso ao endpoint POST /usuario sem autenticação
-                        .requestMatchers("/usuario/**").authenticated() // Requer autenticação para qualquer endpoint que comece com /usuario/
-                        .anyRequest().authenticated() // Requer autenticação para todas as outras requisições
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Configura a política de sessão como stateless (sem sessão)
-                )
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class); // Adiciona o filtro JWT antes do filtro de autenticação padrão
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .authorizeHttpRequests(authorize -> authorize
+                            .requestMatchers("/usuario/login").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/auth").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
+                            .requestMatchers("/usuario/**").authenticated()
+                            .anyRequest().authenticated()
+                    )
+                    .sessionManagement(session -> session
+                            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    )
+                    .addFilterBefore(
+                            jwtRequestFilter,
+                            UsernamePasswordAuthenticationFilter.class
+                    );
 
-        // Retorna a configuração do filtro de segurança construída
-        return http.build();
+            return http.build();
+
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "Erro ao configurar o SecurityFilterChain",
+                    e
+            );
+        }
     }
 
     // Configura o PasswordEncoder para criptografar senhas usando BCrypt

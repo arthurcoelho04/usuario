@@ -1,8 +1,6 @@
 package com.arthur.usuario.infrastructure.exceptions;
 
-import javax.naming.AuthenticationException;
-
-public class UnauthorizedException extends AuthenticationException {
+public class UnauthorizedException extends RuntimeException {
 
     public UnauthorizedException(String message) {
         super(message);

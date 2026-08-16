@@ -26,8 +26,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-
 public class UsuarioService {
+
+    private static final String EMAIL_NAO_ENCONTRADO = "email nao encontrado";
+    private static final String ID_NAO_ENCONTRADO = "Id não encontrado";
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioConverter usuarioConverter;
@@ -37,102 +39,161 @@ public class UsuarioService {
     private final EnderecoRepository enderecoRepository;
     private final TelefoneRepository telefoneRepository;
 
-
     public UsuarioDTO salvarUsuario(UsuarioDTO usuarioDTO) {
         emailExiste(usuarioDTO.getEmail());
-        usuarioDTO.setSenha(passwordEncoder.encode(usuarioDTO.getSenha()));
-        Usuario usuario = usuarioConverter.paraUsuario(usuarioDTO);
-        return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));
 
+        usuarioDTO.setSenha(passwordEncoder.encode(usuarioDTO.getSenha()));
+
+        Usuario usuario = usuarioConverter.paraUsuario(usuarioDTO);
+
+        return usuarioConverter.paraUsuarioDTO(
+                usuarioRepository.save(usuario)
+        );
     }
 
     public String autenticarUsuario(UsuarioDTO usuarioDTO) throws UnauthorizedException {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(usuarioDTO.getEmail(),
-                            usuarioDTO.getSenha())
+                    new UsernamePasswordAuthenticationToken(
+                            usuarioDTO.getEmail(),
+                            usuarioDTO.getSenha()
+                    )
             );
 
             return "Bearer " + jwtUtil.generateToken(authentication.getName());
 
         } catch (BadCredentialsException | UsernameNotFoundException | AuthorizationDeniedException e) {
-            throw new UnauthorizedException("Usuario ou senha invalidos:", e.getCause());
+            throw new UnauthorizedException(
+                    "Usuario ou senha invalidos:",
+                    e
+            );
         }
     }
+
     public void emailExiste(String email) {
-        try {
-            boolean existe = verificarEmailExistente(email);
-            if (existe) {
-                throw new ConflictException("Email ja cadastrado" + email);
-            }
-        } catch (ConflictException e) {
-            throw new ConflictException("Email ja cadastrado" + e.getCause());
+        if (verificarEmailExistente(email)) {
+            throw new ConflictException("Email ja cadastrado" + email);
         }
     }
 
     public boolean verificarEmailExistente(String email) {
-
         return usuarioRepository.existsByEmail(email);
     }
 
     public UsuarioDTO buscarUsuarioPorEmail(String email) {
-        try {
-            return usuarioConverter.paraUsuarioDTO(
-                    usuarioRepository.findByEmail(email)
-                            .orElseThrow(
-                                    () -> new ResourceNotFoundException("email nao encontrado" + email)));
-        } catch (ResourceNotFoundException e) {
-            throw new RuntimeException("email nao encontrado" + email);
-        }
+        return usuarioConverter.paraUsuarioDTO(
+                usuarioRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        EMAIL_NAO_ENCONTRADO + " " + email
+                                )
+                        )
+        );
     }
 
     public void deletaUsuarioPorEmail(String email) {
-
         usuarioRepository.deleteByEmail(email);
     }
 
     public UsuarioDTO atualizarDadosUsuario(String token, UsuarioDTO usuarioDTO) {
         String email = jwtUtil.extrairEmailToken(token.substring(7));
-        usuarioDTO.setSenha(usuarioDTO.getSenha() != null ? passwordEncoder.encode(usuarioDTO.getSenha()) : null);
-        Usuario usuarioEntity = usuarioRepository.findByEmail(email).orElseThrow(() ->
-                new ResourceNotFoundException("email nao encontrado"));
-        Usuario usuario = usuarioConverter.updateUsuario(usuarioDTO, usuarioEntity);
-        return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));
+
+        usuarioDTO.setSenha(
+                usuarioDTO.getSenha() != null
+                        ? passwordEncoder.encode(usuarioDTO.getSenha())
+                        : null
+        );
+
+        Usuario usuarioEntity = usuarioRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                EMAIL_NAO_ENCONTRADO + " " + email
+                        )
+                );
+
+        Usuario usuario = usuarioConverter.updateUsuario(
+                usuarioDTO,
+                usuarioEntity
+        );
+
+        return usuarioConverter.paraUsuarioDTO(
+                usuarioRepository.save(usuario)
+        );
     }
 
     public EnderecoDTO atualizaEndereco(Long idEndereco, EnderecoDTO enderecoDTO) {
-        Endereco entity = enderecoRepository.findById(idEndereco).orElseThrow(() ->
-                new ResourceNotFoundException(" Id não encontrado " + idEndereco));
-        Endereco endereco = usuarioConverter.updateEndereco(enderecoDTO, entity);
-        return usuarioConverter.paraEnderecoDTO(enderecoRepository.save(endereco));
+        Endereco entity = enderecoRepository.findById(idEndereco)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                ID_NAO_ENCONTRADO + " " + idEndereco
+                        )
+                );
+
+        Endereco endereco = usuarioConverter.updateEndereco(
+                enderecoDTO,
+                entity
+        );
+
+        return usuarioConverter.paraEnderecoDTO(
+                enderecoRepository.save(endereco)
+        );
     }
 
     public TelefoneDTO atualizaTelefone(Long idTelefone, TelefoneDTO telefoneDTO) {
+        Telefone entity = telefoneRepository.findById(idTelefone)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                ID_NAO_ENCONTRADO + " " + idTelefone
+                        )
+                );
 
-        Telefone entity = telefoneRepository.findById(idTelefone).orElseThrow(() ->
-                new ResourceNotFoundException(" Id não encontrado " + idTelefone));
-        Telefone telefone = usuarioConverter.updateTelefone(telefoneDTO, entity);
-        return usuarioConverter.paraTelefoneDTO(telefoneRepository.save(telefone));
+        Telefone telefone = usuarioConverter.updateTelefone(
+                telefoneDTO,
+                entity
+        );
+
+        return usuarioConverter.paraTelefoneDTO(
+                telefoneRepository.save(telefone)
+        );
     }
 
     public EnderecoDTO cadastraEndereco(String token, EnderecoDTO dto) {
         String email = jwtUtil.extrairEmailToken(token.substring(7));
-        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow(() ->
-                new ResourceNotFoundException("email não encontrado " + email));
-        Endereco endereco = usuarioConverter.paraEnderecoEntity(dto, usuario.getId());
-        Endereco enderecoEntity = enderecoRepository.save(endereco);
-        return usuarioConverter.paraEnderecoDTO(enderecoEntity);
 
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                EMAIL_NAO_ENCONTRADO + " " + email
+                        )
+                );
+
+        Endereco endereco = usuarioConverter.paraEnderecoEntity(
+                dto,
+                usuario.getId()
+        );
+
+        Endereco enderecoEntity = enderecoRepository.save(endereco);
+
+        return usuarioConverter.paraEnderecoDTO(enderecoEntity);
     }
 
     public TelefoneDTO cadastraTelefone(String token, TelefoneDTO dto) {
         String email = jwtUtil.extrairEmailToken(token.substring(7));
-        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow(() ->
-                new ResourceNotFoundException("telefone não encontrado " + email));
-        Telefone telefone = usuarioConverter.paraTelefoneEntity(dto, usuario.getId());
+
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "telefone não encontrado " + email
+                        )
+                );
+
+        Telefone telefone = usuarioConverter.paraTelefoneEntity(
+                dto,
+                usuario.getId()
+        );
+
         Telefone telefoneEntity = telefoneRepository.save(telefone);
+
         return usuarioConverter.paraTelefoneDTO(telefoneEntity);
     }
-
-
 }
