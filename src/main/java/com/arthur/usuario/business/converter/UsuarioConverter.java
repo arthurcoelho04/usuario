@@ -1,4 +1,4 @@
-package com.arthur.usuario.business.Converter;
+package com.arthur.usuario.business.converter;
 
 import com.arthur.usuario.business.dto.EnderecoDTO;
 import com.arthur.usuario.business.dto.TelefoneDTO;

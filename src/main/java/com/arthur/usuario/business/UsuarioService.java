@@ -1,6 +1,6 @@
 package com.arthur.usuario.business;
 
-import com.arthur.usuario.business.Converter.UsuarioConverter;
+import com.arthur.usuario.business.converter.UsuarioConverter;
 import com.arthur.usuario.business.dto.EnderecoDTO;
 import com.arthur.usuario.business.dto.TelefoneDTO;
 import com.arthur.usuario.business.dto.UsuarioDTO;
@@ -31,7 +31,7 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioConverter usuarioConverter;
-    private final PasswordEncoder PasswordEncoder;
+    private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final EnderecoRepository enderecoRepository;
@@ -40,7 +40,7 @@ public class UsuarioService {
 
     public UsuarioDTO salvarUsuario(UsuarioDTO usuarioDTO) {
         emailExiste(usuarioDTO.getEmail());
-        usuarioDTO.setSenha(PasswordEncoder.encode(usuarioDTO.getSenha()));
+        usuarioDTO.setSenha(passwordEncoder.encode(usuarioDTO.getSenha()));
         Usuario usuario = usuarioConverter.paraUsuario(usuarioDTO);
         return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));
 
@@ -93,7 +93,7 @@ public class UsuarioService {
 
     public UsuarioDTO atualizarDadosUsuario(String token, UsuarioDTO usuarioDTO) {
         String email = jwtUtil.extrairEmailToken(token.substring(7));
-        usuarioDTO.setSenha(usuarioDTO.getSenha() != null ? PasswordEncoder.encode(usuarioDTO.getSenha()) : null);
+        usuarioDTO.setSenha(usuarioDTO.getSenha() != null ? passwordEncoder.encode(usuarioDTO.getSenha()) : null);
         Usuario usuarioEntity = usuarioRepository.findByEmail(email).orElseThrow(() ->
                 new ResourceNotFoundException("email nao encontrado"));
         Usuario usuario = usuarioConverter.updateUsuario(usuarioDTO, usuarioEntity);
