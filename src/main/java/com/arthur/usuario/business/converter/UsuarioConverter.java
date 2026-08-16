@@ -1,4 +1,4 @@
-package com.arthur.usuario.business.Converter;
+package com.arthur.usuario.business.converter;
 
 import com.arthur.usuario.business.dto.EnderecoDTO;
 import com.arthur.usuario.business.dto.TelefoneDTO;
@@ -129,7 +129,7 @@ public class UsuarioConverter {
                 .cidade(dto.getCidade())
                 .complemento(dto.getComplemento())
                 .cep(dto.getCep())
-                .usuario_id(idUsuario)
+                .usuarioid(idUsuario)
                 .build();
     }
 
@@ -137,7 +137,7 @@ public class UsuarioConverter {
         return Telefone.builder()
                 .ddd(dto.getDdd())
                 .numero(dto.getNumero())
-                .usuario_id(idUsuario)
+                .usuarioid(idUsuario)
                 .build();
     }
 }
